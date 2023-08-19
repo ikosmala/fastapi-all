@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -40,6 +41,14 @@ class Post(PostBase):
         from_attributes = True
 
 
+class PostOut(BaseModel):
+    Post: Post
+    votes: int
+
+    class Config:
+        from_attributes = True
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -47,6 +56,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: int | None = None
+
 
 class Vote(BaseModel):
     post_id: int

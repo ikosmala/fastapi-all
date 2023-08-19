@@ -2,11 +2,12 @@ from .. import models, schemas, oath2
 from fastapi import Depends, HTTPException, status, Response, APIRouter
 from ..database import get_db
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
-@router.get("/", response_model=list[schemas.Post])
+@router.get("/", response_model=list[schemas.PostOut])
 def get_posts(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oath2.get_current_user),
@@ -14,17 +15,43 @@ def get_posts(
     skip: int = 0,
     search: str | None = None,
 ):
+    query = (
+        db.query(models.Post, func.count(models.Vote.post_id).label("votes"))
+        .join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True)
+        .group_by(models.Post.id)
+    )
     if not search:
-        posts = db.query(models.Post).limit(limit).offset(skip).all()
+        posts = query.limit(limit).offset(skip).all()
     else:
         posts = (
-            db.query(models.Post)
-            .filter(models.Post.title.contains(search))
+            query.filter(models.Post.title.contains(search))
             .limit(limit)
             .offset(skip)
             .all()
         )
     return posts
+
+
+@router.get("/{id}", response_model=schemas.PostOut)
+def get_post(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oath2.get_current_user),
+):
+    post = (
+        db.query(models.Post, func.count(models.Vote.post_id).label("votes"))
+        .join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True)
+        .group_by(models.Post.id)
+        .where(models.Post.id == id)
+        .first()
+    )
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post with this id was not found",
+        )
+
+    return post
 
 
 @router.post("/", status_code=201, response_model=schemas.Post)
@@ -39,22 +66,6 @@ def create_posts(
     db.commit()
     db.refresh(new_post)
     return new_post
-
-
-@router.get("/{id}", response_model=schemas.Post)
-def get_post(
-    id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(oath2.get_current_user),
-):
-    post = db.query(models.Post).where(models.Post.id == id).first()
-    if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post with this id was not found",
-        )
-
-    return post
 
 
 @router.delete("/{id}", status_code=204)
