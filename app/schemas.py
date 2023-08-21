@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
 
 
@@ -8,12 +8,11 @@ class UserCreate(BaseModel):
 
 
 class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     email: EmailStr
     id: int
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class UserLogin(BaseModel):
@@ -32,21 +31,19 @@ class PostCreate(PostBase):
 
 
 class Post(PostBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     created_at: datetime
     owner_id: int
     owner: UserOut
 
-    class Config:
-        from_attributes = True
-
 
 class PostOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     Post: Post
     votes: int
-
-    class Config:
-        from_attributes = True
 
 
 class Token(BaseModel):
