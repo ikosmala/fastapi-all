@@ -6,7 +6,7 @@ from .routers import post, user, auth, vote
 from fastapi.middleware.cors import CORSMiddleware
 
 # done by alembic
-# models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -26,4 +26,4 @@ app.include_router(vote.router)
 
 @app.get("/")
 def hello():
-    return {"hello": "world"}
+    return {"hello": "bind mount works"}
