@@ -26,4 +26,4 @@ app.include_router(vote.router)
 
 @app.get("/")
 def hello():
-    return {"hello": "bind mount works"}
+    return {"hello": "User/post managment CRUD"}
