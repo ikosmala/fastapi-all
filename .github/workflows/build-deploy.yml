@@ -20,9 +20,10 @@ jobs:
       postgres:
         # Docker Hub image
         image: postgres
+        # Provide the password for postgres
         env:
-          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: testpassword
+          POSTGRES_USER: postgres
           POSTGRES_DB: test-db
         ports:
           - 5432:5432
