@@ -9,8 +9,8 @@ jobs:
     env:
       DATABASE_HOSTNAME: localhost
       DATABASE_PORT: 5432
-      DATABASE_PASSWORD: kosma
-      DATABASE_NAME: fastapi-all
+      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: test-db
       DATABASE_USERNAME: postgres
       SECRET_KEY: 09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
       ALGORITHM: HS256
@@ -52,10 +52,6 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install --no-root
-      - name: Create Test Database
-        run: |
-          sudo apt-get -yqq install postgresql-client
-          psql -h localhost -U postgres -c 'CREATE DATABASE "fastapi-all_test";'
       - name: Test with pytest
         run: |
           poetry run pytest
