@@ -1,17 +1,9 @@
 from app import schemas
-from .database import client, session
+
 import pytest
 from fastapi import HTTPException
-
-
-@pytest.fixture()
-def test_user(client):
-    user_data = {"email": "sometest@email.com", "password": "testpassword"}
-    response = client.post("/users/", json=user_data)
-    assert response.status_code == 201
-    new_user = response.json()
-    new_user["password"] = user_data["password"]
-    return new_user
+from jose import jwt
+from app.config import settings
 
 
 def test_root(client):
@@ -54,4 +46,30 @@ def test_user_login(client, test_user):
         "/login",
         data={"username": test_user["email"], "password": test_user["password"]},
     )
+    login_res = schemas.Token(**response.json())
+
+    payload = jwt.decode(
+        login_res.access_token, settings.secret_key, algorithms=[settings.algorithm]
+    )
+    id = payload.get("user_id")
+    assert id == test_user["id"]
+    assert login_res.token_type == "bearer"
     assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "email, password, status_code",
+    [
+        ("sometest@email.com", "wrongpassword", 403),
+        ("wrongemail@mail.com", "testpassword", 403),
+        (None, None, 422),
+        (None, "testpassword", 422),
+        ("sometest@email.com", None, 422),
+    ],
+)
+def test_incorrect_login(client, test_user, email, password, status_code):
+    response = client.post(
+        "/login",
+        data={"username": email, "password": password},
+    )
+    assert response.status_code == status_code
