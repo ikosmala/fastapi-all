@@ -8,8 +8,9 @@ from app.database import get_db, Base
 import pytest
 from app.oath2 import create_access_token
 
-SQLALCHEMY_DATABASE_URL = f"postgresql://postgres:kosma@localhost:5432/fastapi-all_test"
-
+SQLALCHEMY_DATABASE_URL = (
+    f"postgresql://postgres:postgres@localhost:5432/{settings.database_name}_test"
+)
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
