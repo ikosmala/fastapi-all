@@ -24,12 +24,11 @@ services:
       - postgres
 
   postgres:
-    image: postgres:15.1-alpine
+    image: postgres
     networks:
       - backend_network
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-
     expose:
       - 5432
     environment:
