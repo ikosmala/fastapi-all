@@ -26,4 +26,4 @@ app.include_router(vote.router)
 
 @app.get("/")
 def hello():
-    return {"hello": "User/post managment CRUD"}
+    return {"hello": "Simple managment CRUD"}

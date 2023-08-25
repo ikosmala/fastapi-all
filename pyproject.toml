@@ -20,6 +20,7 @@ pydantic-settings = "^2.0.3"
 alembic = "^1.11.3"
 pytest = "^7.4.0"
 httpx = "^0.24.1"
+redis = "^5.0.0"
 
 
 [build-system]

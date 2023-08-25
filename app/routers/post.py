@@ -1,8 +1,9 @@
 from .. import models, schemas, oath2
 from fastapi import Depends, HTTPException, status, Response, APIRouter
-from ..database import get_db
+from ..database import get_db, get_rd
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+import json
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -37,7 +38,15 @@ def get_post(
     id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oath2.get_current_user),
+    rd=Depends(get_rd),
 ):
+    key_name = f"user-{current_user.id}:post-{id}"
+    cache = rd.get(key_name)
+    if cache:
+        print("cache hit for", key_name)
+        post = schemas.PostOut(**json.loads(cache))
+        return post
+
     post = (
         db.query(models.Post, func.count(models.Vote.post_id).label("votes"))
         .join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True)
@@ -45,12 +54,17 @@ def get_post(
         .where(models.Post.id == id)
         .first()
     )
+
     if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post with this id was not found",
         )
-
+    post_model, votes_count = post
+    post_out = schemas.PostOut(Post=post_model, votes=votes_count)
+    cache = post_out.model_dump_json()
+    rd.set(key_name, cache)
+    rd.expire(key_name, 10)
     return post
 
 
