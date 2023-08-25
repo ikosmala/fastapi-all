@@ -4,6 +4,7 @@ from ..database import get_db, get_rd
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 import json
+from fastapi.encoders import jsonable_encoder
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -15,6 +16,7 @@ def get_posts(
     limit: int = 10,
     skip: int = 0,
     search: str | None = None,
+    rd=Depends(get_rd),
 ):
     query = (
         db.query(models.Post, func.count(models.Vote.post_id).label("votes"))
@@ -30,7 +32,16 @@ def get_posts(
             .offset(skip)
             .all()
         )
-    return posts
+    cache = []
+    for post in posts:
+        post_model, votes_count = post
+        post_out = schemas.PostOut(Post=post_model, votes=votes_count)
+        cache.append(jsonable_encoder(post_out))
+
+    rd.set("posts", json.dumps(cache))
+    cached = json.loads(rd.get("posts"))
+    cached_posts = [schemas.PostOut(**item) for item in cached]
+    return cached
 
 
 @router.get("/{id}", response_model=schemas.PostOut)
@@ -40,7 +51,7 @@ def get_post(
     current_user: models.User = Depends(oath2.get_current_user),
     rd=Depends(get_rd),
 ):
-    key_name = f"user-{current_user.id}:post-{id}"
+    key_name = f"post-{id}"
     cache = rd.get(key_name)
     if cache:
         print("cache hit for", key_name)

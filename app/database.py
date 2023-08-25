@@ -30,6 +30,8 @@ def get_rd():
         retry = Retry(ExponentialBackoff(), 3)
         rd = redis.Redis(
             host="redis",
+            username="default",
+            password=settings.redis_password,
             port=6379,
             decode_responses=True,
             retry=retry,
